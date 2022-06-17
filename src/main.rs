@@ -126,6 +126,12 @@ use_gdbstub=true
         } else if is_in_debug {
             let mut stdout = std::io::stdout().lock();
 
+            let buffer = if !buffer.is_empty() {
+                &buffer[..buffer.len() - 1]
+            } else {
+                &buffer
+            };
+
             writeln!(stdout).unwrap();
             stdout.write_all(&buffer).unwrap();
         }
