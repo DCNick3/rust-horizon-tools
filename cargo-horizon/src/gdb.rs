@@ -48,14 +48,19 @@ pub fn run_gdb(
     }
 
     if let Some(symbols_file) = symbols_file {
-        command.arg("-iex");
+        command.arg("-ex");
         command.arg(format!("file {}", symbols_file.to_str().unwrap()));
     } else {
         eprintln!("NOTICE: Symbols file not specified, loading w/o debug symbols");
     }
 
-    command.arg("-iex");
+    command.arg("-ex");
     command.arg(format!("target remote localhost:{}", connect_port));
+
+    for gdbinit_command in gdb_config.gdbinit_commands.iter() {
+        command.arg("-ex");
+        command.arg(gdbinit_command);
+    }
 
     command.status().context("Executing gdb")
 }

@@ -21,6 +21,9 @@ impl Config {
                 &default_config,
                 config::FileFormat::Yaml,
             ))
+            .add_source(
+                config::File::new("cargo-horizon.yml", config::FileFormat::Yaml).required(false),
+            )
             .add_source(config::Environment::with_prefix("cargo_horizon"))
             .build()
             .context("Building the config file")?;
