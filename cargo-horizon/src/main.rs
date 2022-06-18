@@ -18,9 +18,16 @@ enum Args {
         #[clap(long, value_parser)]
         yuzu_log_path: Option<PathBuf>,
     },
-    /// Transform the specified ELF file to NRO and run it inside yuzu emulator
-    /// Can be used a Cargo runner (see docs for probe-run: https://github.com/knurling-rs/probe-run)
+    /// Transform the specified ELF file to NRO and run it inside yuzu emulator with a gdb stub
+    /// Run & attach gdb to it
     GdbYuzu {
+        #[clap(value_parser)]
+        elf_path: PathBuf,
+        #[clap(long, value_parser)]
+        yuzu_log_path: Option<PathBuf>,
+    },
+    /// Transform the specified ELF file to NRO and run it inside yuzu emulator with a gdb stub
+    GdbServerYuzu {
         #[clap(value_parser)]
         elf_path: PathBuf,
         #[clap(long, value_parser)]
@@ -63,6 +70,19 @@ fn run_yuzu(
     let (_temp_dir, nro_path) = convert_to_nro(elf_path).context("Converting ELF to NRO")?;
 
     yuzu_wrapper::main(nro_path, false, yuzu_log_path, yuzu_config)
+        .context("Running yuzu with the converted NRO")?;
+
+    Ok(())
+}
+
+fn gdbserver_yuzu(
+    yuzu_config: &config::Yuzu,
+    elf_path: &Path,
+    yuzu_log_path: Option<&Path>,
+) -> Result<()> {
+    let (_temp_dir, nro_path) = convert_to_nro(elf_path).context("Converting ELF to NRO")?;
+
+    yuzu_wrapper::main(nro_path, true, yuzu_log_path, yuzu_config)
         .context("Running yuzu with the converted NRO")?;
 
     Ok(())
@@ -143,6 +163,11 @@ fn main() -> Result<()> {
             yuzu_log_path.as_deref(),
         )
         .context("Executing gdb-yuzu subcommand")?,
+        Args::GdbServerYuzu {
+            elf_path,
+            yuzu_log_path,
+        } => gdbserver_yuzu(&config.yuzu, elf_path.as_path(), yuzu_log_path.as_deref())
+            .context("Executing gdb-server-yuzu subcommand")?,
         Args::PrintConfig => {
             println!(
                 "{}",
