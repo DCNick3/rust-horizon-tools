@@ -75,17 +75,22 @@ impl Default for Yuzu {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Gdb {
     /// Alternative gdb executable location (inferred from PATH otherwise)
-    gdb_location: Option<PathBuf>,
+    pub gdb_location: Option<PathBuf>,
 
-    /// Location for commands to run on gdb start
-    gdbinit_location: Option<PathBuf>,
+    /// A list of commands to run at gdb start
+    pub gdbinit_commands: Vec<String>,
+
+    /// Location of rust gdb pretty printers
+    pub rust_pretty_printers_dir: Option<PathBuf>,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for Gdb {
     fn default() -> Self {
         Self {
             gdb_location: None,
-            gdbinit_location: None,
+            gdbinit_commands: vec![],
+            rust_pretty_printers_dir: None,
         }
     }
 }
