@@ -7,9 +7,21 @@ use std::path::{Path, PathBuf};
 use tempdir::TempDir;
 
 #[derive(Parser)]
-#[clap(name = "cargo-horizon")]
+#[clap(name = "cargo")]
 #[clap(bin_name = "cargo")]
-enum Args {
+enum Cargo {
+    Horizon(Horizon),
+}
+
+#[derive(clap::Args)]
+#[clap(author, version, about, long_about = None)]
+struct Horizon {
+    #[clap(subcommand)]
+    subcommand: HorizonSubcommands,
+}
+
+#[derive(clap::Subcommand)]
+enum HorizonSubcommands {
     /// Transform the specified ELF file to NRO and run it inside yuzu emulator
     /// Can be used a Cargo runner (see docs for probe-run: https://github.com/knurling-rs/probe-run)
     RunYuzu {
@@ -145,15 +157,18 @@ fn gdb_yuzu(
 fn main() -> Result<()> {
     let config = Config::load().context("Loading config")?;
 
-    let args: Args = Args::parse();
+    let args: Cargo = Cargo::parse();
+    let args = match args {
+        Cargo::Horizon(horizon) => horizon.subcommand,
+    };
 
     match args {
-        Args::RunYuzu {
+        HorizonSubcommands::RunYuzu {
             elf_path,
             yuzu_log_path,
         } => run_yuzu(&config.yuzu, elf_path.as_path(), yuzu_log_path.as_deref())
             .context("Executing run-yuzu subcommand")?,
-        Args::GdbYuzu {
+        HorizonSubcommands::GdbYuzu {
             elf_path,
             yuzu_log_path,
         } => gdb_yuzu(
@@ -163,12 +178,12 @@ fn main() -> Result<()> {
             yuzu_log_path.as_deref(),
         )
         .context("Executing gdb-yuzu subcommand")?,
-        Args::GdbServerYuzu {
+        HorizonSubcommands::GdbServerYuzu {
             elf_path,
             yuzu_log_path,
         } => gdbserver_yuzu(&config.yuzu, elf_path.as_path(), yuzu_log_path.as_deref())
             .context("Executing gdb-server-yuzu subcommand")?,
-        Args::PrintConfig => {
+        HorizonSubcommands::PrintConfig => {
             println!(
                 "{}",
                 serde_yaml::to_string(&config).context("Serializing config")?
